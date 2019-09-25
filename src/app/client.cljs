@@ -1,9 +1,10 @@
 (ns app.client
   (:require
     ;; project libs
+    [app.secrets :as secrets]
     [app.utils :as utils :refer [clog]]
-    [app.pathom :as p :refer [spacex-api]]
-    [app.temp-db :refer [latest-launch]]
+    [app.pathom :as p :refer [pathom-api]]
+    [app.temp-db :refer [temp-db]]
 
     ;; external libs
     [clojure.string :as str]
@@ -25,60 +26,52 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; LatestLaunch Component
+;; FirstComponent Component
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(m/defmutation fetch-latest-launch [_]
+
+(def temp-db-data (atom {}))
+
+(m/defmutation update-temp-db [_]
   (action [{:keys [state]}]
-          (clog {:message "[LatestLaunch] MUTATION fetch-latest-launch" :color "magenta" :props state})
-          (spacex-api {} [:spacex/latest-launch])))
-
-
-(def latest-launch-data (atom {}))
-
-(m/defmutation update-latest-launch [_]
-  (action [{:keys [state]}]
-          (clog {:message "[LatestLaunch] MUTATION update-latest-launch" :color "magenta" :props state})
-          (reset! latest-launch-data latest-launch)))
+          (clog {:message "[FirstComponent] MUTATION update-temp-db" :color "magenta" :props state})
+          (reset! temp-db-data temp-db)))
 
 (comment
-  (comp/transact! APP [(update-latest-launch)])
-  @latest-launch-data
+  (comp/transact! APP [(update-temp-db)])
+  @temp-db-data
 
   (app/schedule-render! APP)
   )
 
-(defsc LatestLaunch [this {:keys [spacex.launch/flight-number
-                                  spacex.launch.first-stage/cores] :as props}]
+(defsc FirstComponent [this props]
   {#_#_:query []
    #_#_:ident []
    :initial-state      {}
    :initLocalState     (fn [this]
-                         (clog {:message "[LatestLaunch]: InitLocalState" :color "teal"}))
+                         (clog {:message "[FirstComponent]: InitLocalState" :color "teal"}))
    :componentDidMount  (fn [this]
                          (let [p (comp/props this)]
-                           (clog {:message "[LatestLaunch] MOUNTED" :props p :color "green"})))
+                           (clog {:message "[FirstComponent] MOUNTED" :props p :color "green"})))
    :componentDidUpdate (fn [this]
                          (let [p (comp/props this)]
-                           (clog {:message "[LatestLaunch]: UPDATED" :color "blue" :props p})))}
+                           (clog {:message "[FirstComponent]: UPDATED" :color "blue" :props p})))}
   (comp/fragment
-    (if flight-number
-      (dom/div :.ui.segment "Flight number " flight-number))
-    (map ui-launch-first-stage cores)))
+    (dom/div)))
 
 
-(def ui-latest-launch (comp/factory LatestLaunch {:keyfn :spacex.launch/flight-number}))
+(def ui-first-component (comp/factory FirstComponent))
 
 
 (comment
 
-  (comp/transact! APP [(update-latest-launch)])
+  (comp/transact! APP [(update-temp-db)])
 
-  @latest-launch-data
+  @temp-db-data
 
-  (reset! latest-launch-data {})
+  (reset! temp-db-data {})
 
-  (reset! (::app/state-atom APP) @latest-launch-data)
+  (reset! (::app/state-atom APP) @temp-db-data)
 
   (reset! (::app/state-atom APP) {})
 
@@ -95,7 +88,7 @@
 ;; ROOT Component
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defsc Root [this {:keys [:spacex/latest-launch] :as props}]
+(defsc Root [this props]
   {#_#_:query []
    #_#_:ident []
 
@@ -110,18 +103,18 @@
                            (clog {:message "[Root]: UPDATED" :color "blue" :props p})))}
   (comp/fragment
     (dom/h1 :.ui.header "Hello, Fulcro!")
-    #_(ui-latest-launch latest-launch)))
+    #_(ui-first-component temp-db)))
 
 
 (comment
 
-  (comp/transact! APP [(update-latest-launch)])
+  (comp/transact! APP [(update-temp-db)])
 
-  @latest-launch-data
+  @temp-db-data
 
-  (reset! latest-launch-data {})
+  (reset! temp-db-data {})
 
-  (reset! (::app/state-atom APP) @latest-launch-data)
+  (reset! (::app/state-atom APP) @temp-db-data)
 
   (reset! (::app/state-atom APP) {})
 
