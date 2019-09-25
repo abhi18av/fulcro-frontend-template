@@ -1,4 +1,4 @@
 (ns app.temp-db)
 
-(def temp-db {}})
+(def temp-db {})
 
