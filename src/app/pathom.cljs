@@ -121,82 +121,6 @@
    :spacex.launch.links/reddit-media
    :spacex.launch.links/reddit-recovery])
 
-(pc/defresolver all-launches
-  [env _]
-  {::pc/output [{:spacex/all-launches launch-out}]}
-  (go-catch
-    (->> (p.http/request env "https://api.spacexdata.com/v3/launches"
-                         {::p.http/accept ::p.http/json}) <?maybe
-         ::p.http/body
-         (mapv adapt-launch)
-         (hash-map :spacex/all-launches))))
-
-
-(comment
-  (spacex-api {} [:spacex/all-launches])
-
-  (spacex-api {} [{:spacex/all-launches [:spacex.launch/flight-number]}])
-  )
-
-
-(pc/defresolver past-launches
-  [env _]
-  {::pc/output [{:spacex/past-launches launch-out}]}
-  (go-catch
-    (->> (p.http/request env "https://api.spacexdata.com/v3/launches/past?limit=10"
-                         {::p.http/accept ::p.http/json}) <?maybe
-         ::p.http/body
-         (mapv adapt-launch)
-         (hash-map :spacex/past-launches))))
-
-(comment
-
-  (spacex-api {} [{:spacex/past-launches [:spacex.launch/mission-name]}])
-
-  (spacex-api {} [{:spacex/past-launches [:spacex.launch/mission-name :spacex.launch.links/video-link]}])
-  )
-
-
-(pc/defresolver upcoming-launches
-  [env _]
-  {::pc/output [{:spacex/upcoming-launches launch-out}]}
-  (go-catch
-    (->> (p.http/request env "https://api.spacexdata.com/v3/launches/upcoming"
-                         {::p.http/accept ::p.http/json}) <?maybe
-         ::p.http/body
-         (mapv adapt-launch)
-         (hash-map :spacex/upcoming-launches))))
-
-
-(comment
-  (spacex-api {} [{:spacex/upcoming-launches [:spacex.launch/mission-name]}])
-
-
-  (spacex-api {} [{:spacex/upcoming-launches [{:spacex.launch.second-stage/payloads [:spacex.payload/reused]}
-                                              {:spacex.launch.first-stage/cores [:spacex.core/reused]}]}])
-
-
-  (spacex-api {} [{:spacex/upcoming-launches [{:spacex.launch.second-stage/payloads [:spacex.payload/reused]}]}])
-
-  )
-
-
-(pc/defresolver one-launch
-  [env {:spacex.launch/keys [flight-number]}]
-  {::pc/input     #{:spacex.launch/flight-number}
-   ::pc/output    launch-out
-   ::pc/transform (pc/transform-auto-batch 10)}
-  (go-catch
-    (->> (p.http/request env (str "https://api.spacexdata.com/v3/launches/" flight-number)
-                         {::p.http/accept ::p.http/json}) <?maybe
-         ::p.http/body
-         adapt-launch)))
-
-(comment
-
-  (spacex-api {} [{[:spacex.launch/flight-number 18] [:spacex.launch.links/wikipedia]}])
-
-  )
 
 
 (pc/defresolver latest-launch
@@ -222,7 +146,7 @@
 
 
 (def resolvers
-  [all-launches past-launches upcoming-launches one-launch latest-launch])
+  [latest-launch])
 
 (defn spacex-plugin []
   {::pc/register resolvers})
