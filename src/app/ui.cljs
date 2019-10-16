@@ -65,7 +65,6 @@
 
 (defsc Root [this props]
   {#_#_:query []
-   #_#_:ident []
 
    :initial-state      {}
    :initLocalState     (fn [this]
